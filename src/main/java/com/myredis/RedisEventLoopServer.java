@@ -67,19 +67,25 @@ public class RedisEventLoopServer {
     System.out.println("Received: " + message);
 
 
+    String response = sendResponse(client, message);
+    if (response == null) return;
+
+    ByteBuffer responseBuffer = ByteBuffer.wrap(response.getBytes());
+    client.write(responseBuffer);
+  }
+
+  private static String sendResponse(SocketChannel client, String message) throws IOException {
     String response;
     if ("PING".equalsIgnoreCase(message)) {
       response = "PONG\n";
     } else if("EXIT".equalsIgnoreCase(message)) {
       client.close();
       System.out.println("Connection closed by client");
-      return;
+      return null;
     } else {
       response = "-UNKNOWN COMMAND\n";
     }
-
-    ByteBuffer responseBuffer = ByteBuffer.wrap(response.getBytes());
-    client.write(responseBuffer);
+    return response;
   }
 
   private static void handleAccept(ServerSocketChannel serverSocketChannel, Selector selector)
