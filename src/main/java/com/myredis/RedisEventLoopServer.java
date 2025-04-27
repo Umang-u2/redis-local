@@ -11,7 +11,7 @@ import java.util.*;
 
 public class RedisEventLoopServer {
 
-  private static final Map<String, String> store = new HashMap<>();
+  private final DataStore dataStore = new DataStore();
   private static final int PORT = 6379;
 
   public static void main(String[] args) throws IOException {
@@ -65,9 +65,10 @@ public class RedisEventLoopServer {
     try{
       List<String> parts = RespParser.parse(buffer);
       if(parts.isEmpty()) return;
+      RedisEventLoopServer server = new RedisEventLoopServer();
 
       String command = parts.get(0).toUpperCase();
-      String response = createResponse(parts, command);
+      String response = server.createResponse(parts, command);
       System.out.println(response);
       ByteBuffer responseBuffer = ByteBuffer.wrap(response.getBytes());
     client.write(responseBuffer);
@@ -77,7 +78,7 @@ public class RedisEventLoopServer {
     }
   }
 
-  private static String createResponse(List<String> parts, String command) {
+  private String createResponse(List<String> parts, String command) {
     String response="";
     switch (command) {
       case "PING":
@@ -88,14 +89,14 @@ public class RedisEventLoopServer {
         break;
       case "SET":
         if(parts.size() == 3){
-          store.put(parts.get(1), parts.get(2));
+          dataStore.set(parts.get(1), parts.get(2));
           return "+OK\r\n";
         } else {
          return "-wrong number of arguments\r\n";
         }
       case "GET":
         if(parts.size() == 2) {
-          String value = store.get(parts.get(1));
+          String value = dataStore.get(parts.get(1));
           if (value == null) {
             return "--1\r\n";
           } else {
