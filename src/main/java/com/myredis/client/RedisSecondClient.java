@@ -1,11 +1,12 @@
-package com.myredis;
+package com.myredis.client;
+
+import com.myredis.protocol.RespParser;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.Scanner;
 
-public class RedisClient {
+public class RedisSecondClient {
   public static void main(String[] args) {
     String host = "localhost";
     int port = 6379;
@@ -32,7 +33,7 @@ public class RedisClient {
         String[] parts = input.trim().split("\\s+");
         String respCommand = RespParser.toRESP(parts);
         writer.println(respCommand);
-        String response = RedisClient.getResponse(socket);
+        String response = RedisSecondClient.getResponse(socket);
         System.out.println("Response from server: " + response);
       }
 

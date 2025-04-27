@@ -1,4 +1,4 @@
-package com.myredis;
+package com.myredis.datastore;
 
 import java.util.HashMap;
 import java.util.Map;

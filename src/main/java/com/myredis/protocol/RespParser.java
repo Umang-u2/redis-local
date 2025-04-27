@@ -1,4 +1,4 @@
-package com.myredis;
+package com.myredis.protocol;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;

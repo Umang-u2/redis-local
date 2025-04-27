@@ -1,4 +1,7 @@
-package com.myredis;
+package com.myredis.server;
+
+import com.myredis.protocol.RespParser;
+import com.myredis.datastore.DataStore;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -11,8 +14,12 @@ import java.util.*;
 
 public class RedisEventLoopServer {
 
-  private final DataStore dataStore = new DataStore();
+  private final DataStore dataStore;
   private static final int PORT = 6379;
+
+  public RedisEventLoopServer(){
+    dataStore = new DataStore();
+  }
 
   public static void main(String[] args) throws IOException {
     try(
@@ -28,6 +35,7 @@ public class RedisEventLoopServer {
 
       System.out.println("Server started on port " + PORT);
 
+      RedisEventLoopServer server = new RedisEventLoopServer();
       while(true){
         selector.select(); //wait for events
         Set<SelectionKey> selectedKeys = selector.selectedKeys();
@@ -41,7 +49,7 @@ public class RedisEventLoopServer {
           if(key.isAcceptable()){
             handleAccept(serverSocketChannel, selector);
           } else if(key.isReadable()){
-            handleRead(key);
+            server.handleRead(key);
           }
         }
       }
@@ -51,7 +59,7 @@ public class RedisEventLoopServer {
     }
   }
 
-  private static void handleRead(SelectionKey key) throws IOException {
+  private void handleRead(SelectionKey key) throws IOException {
     SocketChannel client = (SocketChannel) key.channel();
     ByteBuffer buffer = ByteBuffer.allocate(512);
 
@@ -65,10 +73,9 @@ public class RedisEventLoopServer {
     try{
       List<String> parts = RespParser.parse(buffer);
       if(parts.isEmpty()) return;
-      RedisEventLoopServer server = new RedisEventLoopServer();
 
       String command = parts.get(0).toUpperCase();
-      String response = server.createResponse(parts, command);
+      String response = createResponse(parts, command);
       System.out.println(response);
       ByteBuffer responseBuffer = ByteBuffer.wrap(response.getBytes());
     client.write(responseBuffer);

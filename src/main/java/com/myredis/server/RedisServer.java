@@ -1,4 +1,4 @@
-package com.myredis;
+package com.myredis.server;
 
 import java.io.*;
 import java.net.ServerSocket;
