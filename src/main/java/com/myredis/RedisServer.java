@@ -3,8 +3,13 @@ package com.myredis;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RedisServer {
+
+  private final Map<String, String> store = new HashMap<>();
+
   public static void main(String[] args) {
     int port = 6379;
 

@@ -7,11 +7,11 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 public class RedisEventLoopServer {
 
+  private static final Map<String, String> store = new HashMap<>();
   private static final int PORT = 6379;
 
   public static void main(String[] args) throws IOException {
@@ -53,7 +53,7 @@ public class RedisEventLoopServer {
 
   private static void handleRead(SelectionKey key) throws IOException {
     SocketChannel client = (SocketChannel) key.channel();
-    ByteBuffer buffer = ByteBuffer.allocate(256);
+    ByteBuffer buffer = ByteBuffer.allocate(512);
 
     int read = client.read(buffer);
     if (read == -1) {
@@ -62,28 +62,48 @@ public class RedisEventLoopServer {
       return;
     }
 
-    buffer.flip();
-    String message = new String(buffer.array(), 0, buffer.limit()).trim();
-    System.out.println("Received: " + message);
+    try{
+      List<String> parts = RespParser.parse(buffer);
+      if(parts.isEmpty()) return;
 
-
-    String response = sendResponse(client, message);
-    if (response == null) return;
-
-    ByteBuffer responseBuffer = ByteBuffer.wrap(response.getBytes());
+      String command = parts.get(0).toUpperCase();
+      String response = createResponse(parts, command);
+      System.out.println(response);
+      ByteBuffer responseBuffer = ByteBuffer.wrap(response.getBytes());
     client.write(responseBuffer);
+    } catch (IOException e){
+      String error = "-malformed request\r\n";
+      client.write(ByteBuffer.wrap(error.getBytes()));
+    }
   }
 
-  private static String sendResponse(SocketChannel client, String message) throws IOException {
-    String response;
-    if ("PING".equalsIgnoreCase(message)) {
-      response = "PONG\n";
-    } else if("EXIT".equalsIgnoreCase(message)) {
-      client.close();
-      System.out.println("Connection closed by client");
-      return null;
-    } else {
-      response = "-UNKNOWN COMMAND\n";
+  private static String createResponse(List<String> parts, String command) {
+    String response="";
+    switch (command) {
+      case "PING":
+        response = "+PONG\r\n";
+        break;
+      case "ECHO":
+        response = parts.size() > 1 ? "+" + parts.get(1) + "\r\n" : "-ERR wrong number of arguments\r\n";
+        break;
+      case "SET":
+        if(parts.size() == 3){
+          store.put(parts.get(1), parts.get(2));
+          return "+OK\r\n";
+        } else {
+         return "-wrong number of arguments\r\n";
+        }
+      case "GET":
+        if(parts.size() == 2) {
+          String value = store.get(parts.get(1));
+          if (value == null) {
+            return "--1\r\n";
+          } else {
+            return "$" + value.length() + "\r\n" + value + "\r\n";
+          }
+        } else return "-wrong number of arguments\r\n";
+      default:
+        response = "-unknown command '" + command + "'\r\n";
     }
     return response;
   }
