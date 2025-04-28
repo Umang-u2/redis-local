@@ -1,5 +1,6 @@
 package com.myredis.server;
 
+import com.myredis.datastore.ValueWrapper;
 import com.myredis.protocol.RespParser;
 import com.myredis.datastore.DataStore;
 
@@ -85,6 +86,7 @@ public class RedisEventLoopServer {
     }
   }
 
+  Long expiryTime = null;
   private String createResponse(List<String> parts, String command) {
     String response="";
     switch (command) {
@@ -96,18 +98,31 @@ public class RedisEventLoopServer {
         break;
       case "SET":
         if(parts.size() == 3){
-          dataStore.set(parts.get(1), parts.get(2));
+          dataStore.set(parts.get(1), parts.get(2), null);
+          return "+OK\r\n";
+        } else if(parts.size() ==5 && "EX".equalsIgnoreCase(parts.get(3))) {
+          int seconds = Integer.parseInt(parts.get(4));
+          expiryTime = System.currentTimeMillis() + (seconds * 1000L);
+          dataStore.set(parts.get(1),parts.get(2),expiryTime);
+          return "+OK\r\n";
+        } else if(parts.size() ==5 && "PX".equalsIgnoreCase(parts.get(3))){
+          long milliSeconds = Long.parseLong(parts.get(4));
+          expiryTime = System.currentTimeMillis()+milliSeconds;
+          dataStore.set(parts.get(1),parts.get(2),expiryTime);
           return "+OK\r\n";
         } else {
          return "-wrong number of arguments\r\n";
         }
       case "GET":
         if(parts.size() == 2) {
-          String value = dataStore.get(parts.get(1));
+          ValueWrapper value = dataStore.get(parts.get(1));
           if (value == null) {
             return "--1\r\n";
+          } else if(value.isExpired()){
+            dataStore.remove(parts.get(1));
+            return "--1\r\n";
           } else {
-            return "$" + value.length() + "\r\n" + value + "\r\n";
+            return "$" + value.getValue().length() + "\r\n" + value.getValue() + "\r\n";
           }
         } else return "-wrong number of arguments\r\n";
       default:

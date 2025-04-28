@@ -15,7 +15,7 @@ public class RedisSecondClient {
          PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
          BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
-      String client = "Client: 1st";
+      String client = "Client: 2nd";
       System.out.println("Connected to Redis-like server by "+client);
       System.out.println("Type commands like: PING, ECHO hello, SET mykey value, GET mykey");
       System.out.println("Type 'exit' to quit.");

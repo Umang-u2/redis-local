@@ -5,13 +5,18 @@ import java.util.Map;
 
 public class DataStore {
 
-  private final Map<String, String> store = new HashMap<>();
+  private final Map<String, ValueWrapper> store = new HashMap<>();
 
-  public void set(String key, String value) {
-    store.put(key, value);
+  public void set(String key, String value, Long expiry) {
+    store.put(key, new ValueWrapper(value,expiry));
   }
 
-  public String get(String key) {
+  public ValueWrapper get(String key) {
     return store.get(key);
   }
+
+  public void remove(String key){
+    store.remove(key);
+  }
+
 }
