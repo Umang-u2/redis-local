@@ -74,12 +74,12 @@ RedisLite/
 ## Key Components:
 
 ```
-**DataStore:** Manages the in-memory data (key-value pairs).
-**ValueWrapper:** Wraps the values to handle expiration times.
-**RDBPersistenceManager:** Manages saving and loading the datastore to/from an RDB file.
-**RedisServer:** Listens for client commands and processes them.
-**RedisCommandHandler:** Handles parsing and execution of Redis-like commands.
-**ConfigurationManager:** Loads configuration settings like RDB file paths.
+DataStore: Manages the in-memory data (key-value pairs).
+ValueWrapper: Wraps the values to handle expiration times.
+RDBPersistenceManager: Manages saving and loading the datastore to/from an RDB file.
+RedisServer: Listens for client commands and processes them.
+RedisCommandHandler: Handles parsing and execution of Redis-like commands.
+ConfigurationManager: Loads configuration settings like RDB file paths.
 
 ```
 ---
