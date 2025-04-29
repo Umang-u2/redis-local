@@ -1,5 +1,6 @@
 package com.myredis.server;
 
+import com.myredis.datastore.RDBPersistenceManager;
 import com.myredis.datastore.ValueWrapper;
 import com.myredis.protocol.RespParser;
 import com.myredis.datastore.DataStore;
@@ -12,11 +13,15 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class RedisEventLoopServer {
 
   private final DataStore dataStore;
   private static final int PORT = 6379;
+  // Create once during server setup
+  private static final ExecutorService bgExecutor = Executors.newSingleThreadExecutor();
 
   public RedisEventLoopServer(){
     dataStore = new DataStore();
@@ -105,10 +110,10 @@ public class RedisEventLoopServer {
           expiryTime = System.currentTimeMillis() + (seconds * 1000L);
           dataStore.set(parts.get(1),parts.get(2),expiryTime);
           return "+OK\r\n";
-        } else if(parts.size() ==5 && "PX".equalsIgnoreCase(parts.get(3))){
+        } else if(parts.size() ==5 && "PX".equalsIgnoreCase(parts.get(3))) {
           long milliSeconds = Long.parseLong(parts.get(4));
-          expiryTime = System.currentTimeMillis()+milliSeconds;
-          dataStore.set(parts.get(1),parts.get(2),expiryTime);
+          expiryTime = System.currentTimeMillis() + milliSeconds;
+          dataStore.set(parts.get(1), parts.get(2), expiryTime);
           return "+OK\r\n";
         } else {
          return "-wrong number of arguments\r\n";
@@ -125,6 +130,20 @@ public class RedisEventLoopServer {
             return "$" + value.getValue().length() + "\r\n" + value.getValue() + "\r\n";
           }
         } else return "-wrong number of arguments\r\n";
+      case "SAVE":
+        if(parts.size()>1){
+          return "-wrong number of arguments\r\n";
+        } else {
+          bgExecutor.submit(() -> {
+            try {
+              dataStore.saveToRDB();
+              System.out.println("[RDB] Save complete.");
+            } catch (Exception e) {
+              System.err.println("[RDB] Save failed: " + e.getMessage());
+            }
+          });
+          return "+OK\r\n";
+        }
       default:
         response = "-unknown command '" + command + "'\r\n";
     }

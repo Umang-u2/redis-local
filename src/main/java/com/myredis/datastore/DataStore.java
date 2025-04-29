@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class DataStore {
 
-  private final Map<String, ValueWrapper> store = new HashMap<>();
+  private final Map<String, ValueWrapper> store = RDBPersistenceManager.load();
 
   public void set(String key, String value, Long expiry) {
     store.put(key, new ValueWrapper(value,expiry));
@@ -17,6 +17,10 @@ public class DataStore {
 
   public void remove(String key){
     store.remove(key);
+  }
+
+  public void saveToRDB() {
+    RDBPersistenceManager.save(store);
   }
 
 }
