@@ -11,9 +11,11 @@ RedisLite is a minimal Redis-like server built from scratch in Java for learning
   - `SET key value` — Stores a key-value pair.
   - `GET key` — Retrieves the value associated with a key.
 - **In-Memory Data Store:** Simple and efficient key-value storage using Java's `HashMap`.
+- **RDB Persistence:** Supports saving and loading the datastore from an RDB file to persist data across server restarts.
 - **Event-Loop Based Server:** Single-threaded event-driven architecture.
 - **Socket Communication:** Custom TCP server and client built using Java Sockets.
 - **Clean Client-Server Architecture:** Separate encoder/decoder for RESP messages.
+- **Expiration Support:** SET command supports key expiration using EX (seconds) and PX (milliseconds).
 
 ---
 
@@ -64,8 +66,15 @@ RedisLite/
    |➜ client/ (Client logic)
    |➜ protocol/ (RESP Encoder/Decoder)
    |➜ datastore/ (In-Memory Key-Value Store)
+   |➜ persistence/ (RDB Snapshot Logic)
 ```
-
+## Key Components:
+**DataStore:** Manages the in-memory data (key-value pairs).
+**ValueWrapper:** Wraps the values to handle expiration times.
+**RDBPersistenceManager:** Manages saving and loading the datastore to/from an RDB file.
+**RedisServer:** Listens for client commands and processes them.
+**RedisCommandHandler:** Handles parsing and execution of Redis-like commands.
+**ConfigurationManager:** Loads configuration settings like RDB file paths.
 ---
 
 ## Commands Supported
